@@ -58,3 +58,33 @@ def test_run_retried_does_not_retry_other_errors(monkeypatch):
     with pytest.raises(WslcError):
         engine.run_retried(["start", "foo"])
     assert len(calls) == 1
+
+
+def test_list_project_containers_excludes_stopped_by_default(monkeypatch):
+    calls = []
+
+    def fake_capture_json(args):
+        calls.append(args)
+        return []
+
+    monkeypatch.setattr(engine, "capture_json", fake_capture_json)
+
+    assert engine.list_project_containers("demo") == []
+    assert calls == [
+        ["list", "--format", "json", "-f", "label=com.wslc-compose.project=demo"]
+    ]
+
+
+def test_list_project_containers_includes_all_states_when_requested(monkeypatch):
+    calls = []
+
+    def fake_capture_json(args):
+        calls.append(args)
+        return []
+
+    monkeypatch.setattr(engine, "capture_json", fake_capture_json)
+
+    assert engine.list_project_containers("demo", all_states=True) == []
+    assert calls == [
+        ["list", "-a", "--format", "json", "-f", "label=com.wslc-compose.project=demo"]
+    ]

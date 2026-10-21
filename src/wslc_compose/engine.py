@@ -161,7 +161,7 @@ def capture_json(args: List[str]):
 # --- queries ---------------------------------------------------------------
 
 
-def list_project_containers(project: str, all_states: bool = True) -> List[dict]:
+def list_project_containers(project: str, all_states: bool = False) -> List[dict]:
     args = ["list", "--format", "json", "-f", f"label={LABEL_PROJECT}={project}"]
     if all_states:
         args.insert(1, "-a")

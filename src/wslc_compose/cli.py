@@ -84,9 +84,9 @@ def _select_services(
 # --- container queries ------------------------------------------------------
 
 
-def _project_containers(project: Project) -> List[dict]:
+def _project_containers(project: Project, all_states: bool = False) -> List[dict]:
     """list entries enriched with inspect data (labels, status)."""
-    entries = engine.list_project_containers(project.name)
+    entries = engine.list_project_containers(project.name, all_states)
     enriched = []
     for entry in entries:
         data = engine.inspect(entry.get("Id") or entry.get("Name")) or {}
@@ -230,7 +230,7 @@ def cmd_up(ns: argparse.Namespace) -> int:
 
 def cmd_down(ns: argparse.Namespace) -> int:
     project = _load(ns)
-    containers = _project_containers(project)
+    containers = _project_containers(project, all_states=True)
     for entry in containers:
         if entry["running"]:
             _info(f"Stopping {entry['name']} ...")
@@ -263,7 +263,7 @@ def cmd_down(ns: argparse.Namespace) -> int:
 
 def cmd_ps(ns: argparse.Namespace) -> int:
     project = _load(ns)
-    containers = _project_containers(project)
+    containers = _project_containers(project, all_states=ns.all)
     if ns.services:
         containers = [c for c in containers if c["service"] in ns.services]
     if ns.quiet:
@@ -467,6 +467,9 @@ def build_parser() -> argparse.ArgumentParser:
 
     p = sub.add_parser("ps", help="list project containers")
     p.add_argument("services", nargs="*")
+    p.add_argument(
+        "-a", "--all", action="store_true", help="show all containers, including stopped ones"
+    )
     p.add_argument("-q", "--quiet", action="store_true")
     p.set_defaults(func=cmd_ps)
 
