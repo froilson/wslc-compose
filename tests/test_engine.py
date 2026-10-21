@@ -125,6 +125,25 @@ def test_capture_json_accepts_json_and_ndjson(monkeypatch, output, expected):
     assert engine.capture_json(["list", "--format", "json"]) == expected
 
 
+def test_network_names_uses_json_inventory(monkeypatch):
+    calls = []
+
+    def fake_capture_json(args):
+        calls.append(args)
+        return [{"Name": "purchase-service"}, {"Name": "bridge"}]
+
+    monkeypatch.setattr(engine, "capture_json", fake_capture_json)
+
+    assert engine.network_names() == ["purchase-service", "bridge"]
+    assert calls == [["network", "list", "--format", "json"]]
+
+
+def test_volume_names_uses_json_inventory(monkeypatch):
+    monkeypatch.setattr(engine, "capture_json", lambda args: [{"Name": "purchase-service_data"}])
+
+    assert engine.volume_names() == ["purchase-service_data"]
+
+
 def test_find_wslc_prefers_explicit_override(monkeypatch):
     monkeypatch.setenv("WSLC_COMPOSE_BIN", "D:\\WSL\\wslc.exe")
     engine.find_wslc.cache_clear()

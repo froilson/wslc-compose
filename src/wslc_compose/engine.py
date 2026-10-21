@@ -213,21 +213,9 @@ def inspect_many(ids: List[str]) -> Dict[str, dict]:
     return {i: data for i in ids if (data := inspect(i)) is not None}
 
 
-def _names_from_table(args: List[str], column: str = "NAME") -> List[str]:
-    """Parse names out of a wslc table output (network/volume list)."""
-    proc = run(args, capture=True)
-    lines = proc.stdout.splitlines()
-    if not lines:
-        return []
-    header = lines[0]
-    idx = header.find(column)
-    if idx < 0:
-        return []
-    names = []
-    for line in lines[1:]:
-        if len(line) > idx:
-            names.append(line[idx:].split()[0])
-    return names
+def _names_from_json(args: List[str]) -> List[str]:
+    """Return resource names without depending on localized table headers."""
+    return [entry["Name"] for entry in capture_json(args) if entry.get("Name")]
 
 
 def image_exists(name: str) -> bool:
@@ -243,11 +231,11 @@ def image_exists(name: str) -> bool:
 
 
 def network_names() -> List[str]:
-    return _names_from_table(["network", "list"])
+    return _names_from_json(["network", "list", "--format", "json"])
 
 
 def volume_names() -> List[str]:
-    return _names_from_table(["volume", "list"], column="VOLUME NAME")
+    return _names_from_json(["volume", "list", "--format", "json"])
 
 
 def ensure_network(name: str, dry_run: bool = False) -> bool:
